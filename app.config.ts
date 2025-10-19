@@ -40,7 +40,12 @@ const config: ExpoConfig = {
     bundler: "metro",
   },
   plugins: [
-    "expo-router",
+    [
+      "expo-router",
+      {
+        origin: "https://exp-blog.lhowsam.com",
+      },
+    ],
     [
       "expo-splash-screen",
       {
