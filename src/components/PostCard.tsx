@@ -4,12 +4,12 @@ import { Author } from "@src/types/sanity.types";
 import { format } from "date-fns";
 import * as Haptics from "expo-haptics";
 import { Link, useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { AuthorDetails } from "./AuthorDetails";
-import { ThemedText, ThemedView } from "./Themed";
+import { ThemedText } from "./Themed";
 
 interface Props {
   post: PostWithAuthor;
@@ -48,10 +48,17 @@ export function PostCard({ post }: Props) {
   return (
     <Animated.View entering={FadeIn} exiting={FadeOut}>
       <GestureDetector gesture={gesturePostTap}>
-        <ThemedView style={styles.container}>
-          <ThemedView
-            color={theme.color.backgroundSecondary}
-            style={styles.content}
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: theme.color.background.dark },
+          ]}
+        >
+          <View
+            style={[
+              styles.content,
+              { backgroundColor: theme.color.backgroundSecondary.dark },
+            ]}
           >
             <View
               style={{
@@ -117,8 +124,8 @@ export function PostCard({ post }: Props) {
                 <Link.Preview style={{ ...styles.preview, width: 100 }} />
               </Link>
             </GestureDetector>
-          </ThemedView>
-        </ThemedView>
+          </View>
+        </View>
       </GestureDetector>
     </Animated.View>
   );

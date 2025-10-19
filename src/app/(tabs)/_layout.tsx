@@ -1,22 +1,19 @@
+import * as AC from "@bacons/apple-colors";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useThemeColor } from "@src/components/Themed";
-import { theme } from "@src/theme";
+import BlurTabBarBackground from "@src/components/BlurTabBackground";
+import { HapticTab } from "@src/components/HapticTab";
 import { Tabs } from "expo-router";
 
 export default function Layout() {
-  const inactiveTintColor = useThemeColor({
-    light: "#00000090",
-    dark: "#FFFFFF90",
-  });
-
-  const tintColor = useThemeColor(theme.color.reactBlue);
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: tintColor,
-        tabBarInactiveTintColor: inactiveTintColor,
         headerShown: false,
+        tabBarButton: HapticTab,
+        tabBarBackground: BlurTabBarBackground,
+        tabBarInactiveTintColor: AC.label as unknown as string,
+        tabBarStyle:
+          process.env.EXPO_OS === "ios" ? { position: "absolute" } : {},
       }}
     >
       <Tabs.Screen
@@ -33,6 +30,7 @@ export default function Layout() {
         name="authors"
         options={{
           title: "Authors",
+
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="account-multiple"

@@ -10,11 +10,13 @@ export function AuthorImage({
   size,
   style,
   animated,
+  authorName,
 }: {
   profilePicture?: string | null;
   size?: "small" | "medium" | "large" | "xlarge";
   style?: ViewStyle;
   animated?: boolean;
+  authorName?: string;
 }) {
   const borderColor = useThemeColor(theme.color.border);
 
@@ -69,6 +71,14 @@ export function AuthorImage({
           transition={animated && isLoading ? 300 : 0}
           onLoadStart={() => setIsLoading(true)}
           onLoadEnd={() => setIsLoading(false)}
+          cachePolicy="memory-disk"
+          priority="normal"
+          contentFit="cover"
+          accessibilityLabel={
+            authorName
+              ? `Profile picture of ${authorName}`
+              : "Author profile picture"
+          }
         />
       ) : (
         placeholder

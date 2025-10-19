@@ -1,14 +1,23 @@
 import { Author, Post } from "@src/types/sanity.types";
 import { client } from "./sanity-client";
 
-// Custom type for Post with dereferenced author
-export type PostWithAuthor = Omit<Post, "author"> & {
+// Custom type for Post with dereferenced author and mainImage
+export type PostWithAuthor = Omit<Post, "author" | "mainImage"> & {
   author: Author & {
     image?: {
       asset?: {
         url?: string;
       };
     } & Omit<NonNullable<Author["image"]>, "asset">;
+  };
+  mainImage?: {
+    asset?: {
+      url?: string;
+    };
+    media?: unknown;
+    hotspot?: NonNullable<Post["mainImage"]>["hotspot"];
+    crop?: NonNullable<Post["mainImage"]>["crop"];
+    _type: "image";
   };
 };
 

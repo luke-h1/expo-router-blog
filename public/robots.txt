@@ -1,0 +1,7 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Allow all crawlers to access the sitemap
+Sitemap: https://expo-router-blog.vercel.app/_sitemap.xml
+

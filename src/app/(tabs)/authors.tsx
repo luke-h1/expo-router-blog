@@ -1,9 +1,10 @@
 import { AuthorImage } from "@src/components/AuthorImage";
-import { ThemedText, useThemeColor } from "@src/components/Themed";
+import { ThemedText } from "@src/components/Themed";
 import { blogService, PostWithAuthor } from "@src/services/blog-service";
 import { theme } from "@src/theme";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
+import Head from "expo-router/head";
 import { useCallback } from "react";
 import {
   FlatList,
@@ -22,8 +23,8 @@ export default function AuthorScreen() {
     queryFn: () => blogService.getAllAuthors(),
   });
 
-  const backgroundColor = useThemeColor(theme.color.background);
-  const borderColor = useThemeColor(theme.color.border);
+  const backgroundColor = theme.color.background.dark;
+  const borderColor = theme.color.border.dark;
   const insets = useSafeAreaInsets();
 
   const renderItem: ListRenderItem<PostWithAuthor["author"]> = useCallback(
@@ -38,6 +39,7 @@ export default function AuthorScreen() {
           <AuthorImage
             profilePicture={item.image?.asset?.url as string}
             size="medium"
+            authorName={item.name}
           />
           <View style={styles.authorInfo}>
             <ThemedText fontSize={theme.fontSize16} fontWeight="semiBold">
@@ -80,29 +82,38 @@ export default function AuthorScreen() {
   }
 
   return (
-    <FlatList
-      data={data}
-      style={{ backgroundColor }}
-      contentContainerStyle={{
-        paddingBottom: Platform.select({
-          android: 100 + insets.bottom,
-          default: 0,
-        }),
-      }}
-      refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-      }
-      keyExtractor={(item) => item._id}
-      renderItem={renderItem}
-      contentInsetAdjustmentBehavior="automatic"
-      ListEmptyComponent={
-        <View style={styles.emptyContainer}>
-          <ThemedText color={theme.color.textSecondary}>
-            No authors found
-          </ThemedText>
-        </View>
-      }
-    />
+    <>
+      <Head>
+        <title>Authors | Expo Router Blog</title>
+        <meta
+          name="description"
+          content="Browse all authors and contributors on Expo Router Blog. Discover their profiles, bios, and published articles."
+        />
+      </Head>
+      <FlatList
+        data={data}
+        style={{ backgroundColor }}
+        contentContainerStyle={{
+          paddingBottom: Platform.select({
+            android: 100 + insets.bottom,
+            default: 0,
+          }),
+        }}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+        }
+        keyExtractor={(item) => item._id}
+        renderItem={renderItem}
+        contentInsetAdjustmentBehavior="automatic"
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <ThemedText color={theme.color.textSecondary}>
+              No authors found
+            </ThemedText>
+          </View>
+        }
+      />
+    </>
   );
 }
 

@@ -1,16 +1,24 @@
-import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+  Montserrat_700Bold as MontserratBold,
+  Montserrat_700Bold_Italic as MontserratBoldItalic,
+  Montserrat_300Light as MontserratLight,
+  Montserrat_300Light_Italic as MontserratLightItalic,
+  Montserrat_500Medium as MontserratMedium,
+  Montserrat_500Medium_Italic as MontserratMediumItalic,
+  Montserrat_600SemiBold as MontserratSemiBold,
+  Montserrat_600SemiBold_Italic as MontserratSemiBoldItalic,
+} from "@expo-google-fonts/montserrat";
+import { ActionSheetProvider } from "@expo/react-native-action-sheet";
+import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { ThemedText, useThemeColor } from "@src/components/Themed";
+import { usePassiveScroll } from "@src/hooks/usePassiveScroll";
 import { theme } from "@src/theme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { osName } from "expo-device";
+import { useFonts } from "expo-font";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import * as NavigationBar from "expo-navigation-bar";
-import { Stack, usePathname, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -20,12 +28,16 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 5,
+      retry: Platform.OS === "web" ? 1 : 3,
       refetchOnReconnect: true,
-      retryDelay: 3000,
+      retryDelay: Platform.OS === "web" ? 1000 : 2000,
+      staleTime: 60000, // 1 minute
+      gcTime: 300000, // 5 minutes
     },
   },
 });
+
+SplashScreen.preventAutoHideAsync();
 
 SplashScreen.setOptions({
   duration: 200,
@@ -33,9 +45,26 @@ SplashScreen.setOptions({
 });
 
 export default function RootLayout() {
-  const router = useRouter();
-  const pathName = usePathname();
   const colorScheme = useColorScheme() || "light";
+
+  usePassiveScroll();
+
+  const [fontsLoaded, fontError] = useFonts({
+    "Montserrat-Light": MontserratLight,
+    "Montserrat-LightItalic": MontserratLightItalic,
+    "Montserrat-Medium": MontserratMedium,
+    "Montserrat-MediumItalic": MontserratMediumItalic,
+    "Montserrat-SemiBold": MontserratSemiBold,
+    "Montserrat-SemiBoldItalic": MontserratSemiBoldItalic,
+    "Montserrat-Bold": MontserratBold,
+    "Montserrat-BoldItalic": MontserratBoldItalic,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -47,14 +76,16 @@ export default function RootLayout() {
 
   const tabBarBackgroundColor = useThemeColor(theme.color.background);
 
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={styles.container}>
         <ActionSheetProvider>
-          <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-          >
-            <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+          <ThemeProvider value={DarkTheme}>
+            <StatusBar style={"dark"} />
 
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

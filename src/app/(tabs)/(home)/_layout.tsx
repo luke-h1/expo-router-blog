@@ -1,10 +1,8 @@
-import { useThemeColor } from "@src/components/Themed";
 import { theme } from "@src/theme";
 import { Stack } from "expo-router";
 import { Platform } from "react-native";
 
 export default function Layout() {
-  const tabBarBackgroundColor = useThemeColor(theme.color.background);
   return (
     <Stack
       screenOptions={{
@@ -18,7 +16,7 @@ export default function Layout() {
         options={{
           title: Platform.OS === "ios" ? "Home" : "",
           headerStyle: {
-            backgroundColor: tabBarBackgroundColor,
+            backgroundColor: theme.color.background.dark,
           },
         }}
       />

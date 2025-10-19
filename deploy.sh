@@ -1,0 +1,2 @@
+#!/bin/bash
+EXPO_APPLE_TEAM_ID="XJA7HDCMMY" bun run eas build --platform ios --profile production --local --output=./app-production.abd && bun run eas submit -p ios --path ./app-production.abd

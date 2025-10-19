@@ -14,10 +14,12 @@ export function AuthorDetails({ author }: Props) {
     <View style={styles.speaker}>
       <AuthorImage
         profilePicture={imageService.urlFor(
-          author?.image?.asset?.url as string
+          author?.image?.asset?.url as string,
+          { width: 84, height: 84 }
         )}
         animated
         size="small"
+        authorName={author?.name}
       />
       <View style={styles.speakerDetails}>
         <ThemedText fontSize={theme.fontSize16}>{author.name}</ThemedText>

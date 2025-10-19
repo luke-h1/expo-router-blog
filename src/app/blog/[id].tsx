@@ -1,7 +1,6 @@
-import { PortableText } from "@portabletext/react-native";
 import { AuthorDetails } from "@src/components/AuthorDetails";
 import { HeaderButton } from "@src/components/HeaderButton/HeaderButton";
-import { ThemedText, ThemedView, useThemeColor } from "@src/components/Themed";
+import { ThemedText, ThemedView } from "@src/components/Themed";
 import { blogService } from "@src/services/blog-service";
 import imageService from "@src/services/image-service";
 import { theme } from "@src/theme";
@@ -15,6 +14,7 @@ import {
   useLocalSearchParams,
   useRouter,
 } from "expo-router";
+import { lazy, Suspense } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -23,15 +23,28 @@ import {
   View,
 } from "react-native";
 
+const PortableText = lazy(() =>
+  import("@portabletext/react-native").then((module) => ({
+    default: module.PortableText,
+  }))
+);
+
+export async function generateStaticParams(): Promise<
+  Record<string, string>[]
+> {
+  const posts = await blogService.getAllPosts();
+  // Return an array of params to generate static HTML files for.
+  // Each entry in the array will be a new page.
+  return posts.map((post) => ({ id: post._id }));
+}
+
 export default function BlogScreen() {
   const isPreview = useIsPreview();
   const params = useLocalSearchParams();
   const router = useRouter();
 
-  const borderColor = useThemeColor(theme.color.border);
-  const backgroundColorSecondary = useThemeColor(
-    theme.color.backgroundSecondary
-  );
+  const borderColor = theme.color.border.dark;
+  const backgroundColorSecondary = theme.color.backgroundSecondary.dark;
 
   const {
     data: post,
@@ -123,147 +136,163 @@ export default function BlogScreen() {
             {post.mainImage?.asset && (
               <Image
                 source={{
-                  uri: imageService.urlFor(
-                    // @ts-expect-error wrong types
-                    post.mainImage.asset.url
-                  ),
+                  uri: imageService.urlFor(post.mainImage.asset.url as string, {
+                    width: 800,
+                    height: 500,
+                  }),
                 }}
                 style={styles.mainImage}
                 contentFit="cover"
                 transition={500}
+                cachePolicy="memory-disk"
+                priority="high"
+                placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
+                accessibilityLabel={`Featured image for ${post.title}`}
               />
             )}
 
             {post.body && (
               <View style={styles.bodyContainer}>
-                <PortableText
-                  value={post.body}
-                  components={{
-                    block: {
-                      normal: ({ children }) => (
-                        <ThemedText
-                          fontSize={theme.fontSize16}
-                          fontWeight="medium"
-                          style={styles.paragraph}
-                        >
-                          {children}
-                        </ThemedText>
-                      ),
-                      h1: ({ children }) => (
-                        <ThemedText
-                          fontSize={theme.fontSize28}
-                          fontWeight="bold"
-                          style={styles.heading1}
-                        >
-                          {children}
-                        </ThemedText>
-                      ),
-                      h2: ({ children }) => (
-                        <ThemedText
-                          fontSize={theme.fontSize24}
-                          fontWeight="bold"
-                          style={styles.heading2}
-                        >
-                          {children}
-                        </ThemedText>
-                      ),
-                      h3: ({ children }) => (
-                        <ThemedText
-                          fontSize={theme.fontSize20}
-                          fontWeight="semiBold"
-                          style={styles.heading3}
-                        >
-                          {children}
-                        </ThemedText>
-                      ),
-                      h4: ({ children }) => (
-                        <ThemedText
-                          fontSize={theme.fontSize18}
-                          fontWeight="semiBold"
-                          style={styles.heading4}
-                        >
-                          {children}
-                        </ThemedText>
-                      ),
-                      blockquote: ({ children }) => (
-                        <View
-                          style={[
-                            styles.blockquote,
-                            { borderLeftColor: borderColor },
-                          ]}
-                        >
+                <Suspense
+                  fallback={
+                    <View style={{ padding: theme.space16 }}>
+                      <ActivityIndicator />
+                    </View>
+                  }
+                >
+                  <PortableText
+                    value={post.body}
+                    components={{
+                      block: {
+                        normal: ({ children }) => (
                           <ThemedText
                             fontSize={theme.fontSize16}
                             fontWeight="medium"
-                            color={theme.color.textSecondary}
-                            style={styles.blockquoteText}
+                            style={styles.paragraph}
                           >
                             {children}
                           </ThemedText>
-                        </View>
-                      ),
-                    },
-                    list: {
-                      bullet: ({ children }) => (
-                        <View style={styles.list}>{children}</View>
-                      ),
-                    },
-                    listItem: {
-                      bullet: ({ children }) => (
-                        <View style={styles.listItem}>
+                        ),
+                        h1: ({ children }) => (
                           <ThemedText
-                            fontSize={theme.fontSize16}
-                            style={styles.bullet}
-                          >
-                            •
-                          </ThemedText>
-                          <ThemedText
-                            fontSize={theme.fontSize16}
-                            fontWeight="medium"
-                            style={styles.listItemText}
+                            fontSize={theme.fontSize28}
+                            fontWeight="bold"
+                            style={styles.heading1}
                           >
                             {children}
                           </ThemedText>
-                        </View>
-                      ),
-                    },
-                    marks: {
-                      strong: ({ children }) => (
-                        <ThemedText fontWeight="bold">{children}</ThemedText>
-                      ),
-                      em: ({ children }) => (
-                        <ThemedText style={styles.italic}>
-                          {children}
-                        </ThemedText>
-                      ),
-                      link: ({ children, value }) => (
-                        <ThemedText
-                          color={theme.color.reactBlue}
-                          style={styles.link}
-                        >
-                          {children}
-                        </ThemedText>
-                      ),
-                    },
-                    types: {
-                      image: ({ value }) => {
-                        if (!value?.asset?.url) return null;
-                        return (
-                          <Image
-                            source={{
-                              uri: imageService.urlFor(
-                                value.asset.url as string
-                              ),
-                            }}
-                            style={styles.inlineImage}
-                            contentFit="cover"
-                            transition={200}
-                          />
-                        );
+                        ),
+                        h2: ({ children }) => (
+                          <ThemedText
+                            fontSize={theme.fontSize24}
+                            fontWeight="bold"
+                            style={styles.heading2}
+                          >
+                            {children}
+                          </ThemedText>
+                        ),
+                        h3: ({ children }) => (
+                          <ThemedText
+                            fontSize={theme.fontSize20}
+                            fontWeight="semiBold"
+                            style={styles.heading3}
+                          >
+                            {children}
+                          </ThemedText>
+                        ),
+                        h4: ({ children }) => (
+                          <ThemedText
+                            fontSize={theme.fontSize18}
+                            fontWeight="semiBold"
+                            style={styles.heading4}
+                          >
+                            {children}
+                          </ThemedText>
+                        ),
+                        blockquote: ({ children }) => (
+                          <View
+                            style={[
+                              styles.blockquote,
+                              { borderLeftColor: borderColor },
+                            ]}
+                          >
+                            <ThemedText
+                              fontSize={theme.fontSize16}
+                              fontWeight="medium"
+                              color={theme.color.textSecondary}
+                              style={styles.blockquoteText}
+                            >
+                              {children}
+                            </ThemedText>
+                          </View>
+                        ),
                       },
-                    },
-                  }}
-                />
+                      list: {
+                        bullet: ({ children }) => (
+                          <View style={styles.list}>{children}</View>
+                        ),
+                      },
+                      listItem: {
+                        bullet: ({ children }) => (
+                          <View style={styles.listItem}>
+                            <ThemedText
+                              fontSize={theme.fontSize16}
+                              style={styles.bullet}
+                            >
+                              •
+                            </ThemedText>
+                            <ThemedText
+                              fontSize={theme.fontSize16}
+                              fontWeight="medium"
+                              style={styles.listItemText}
+                            >
+                              {children}
+                            </ThemedText>
+                          </View>
+                        ),
+                      },
+                      marks: {
+                        strong: ({ children }) => (
+                          <ThemedText fontWeight="bold">{children}</ThemedText>
+                        ),
+                        em: ({ children }) => (
+                          <ThemedText style={styles.italic}>
+                            {children}
+                          </ThemedText>
+                        ),
+                        link: ({ children, value }) => (
+                          <ThemedText
+                            color={theme.color.reactBlue}
+                            style={styles.link}
+                          >
+                            {children}
+                          </ThemedText>
+                        ),
+                      },
+                      types: {
+                        image: ({ value }) => {
+                          if (!value?.asset?.url) return null;
+                          return (
+                            <Image
+                              source={{
+                                uri: imageService.urlFor(
+                                  value.asset.url as string,
+                                  { width: 800, height: 400 } // Responsive size for inline images
+                                ),
+                              }}
+                              style={styles.inlineImage}
+                              contentFit="cover"
+                              transition={200}
+                              cachePolicy="memory-disk"
+                              priority="normal"
+                              accessibilityLabel={value.alt || "Article image"}
+                            />
+                          );
+                        },
+                      },
+                    }}
+                  />
+                </Suspense>
               </View>
             )}
           </ScrollView>

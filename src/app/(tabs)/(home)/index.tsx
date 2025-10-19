@@ -1,11 +1,11 @@
 import { useFocusEffect, useScrollToTop } from "@react-navigation/native";
 import { queryClient } from "@src/app/_layout";
 import { PostCard } from "@src/components/PostCard";
-import { useThemeColor } from "@src/components/Themed";
 import { blogService, PostWithAuthor } from "@src/services/blog-service";
 import { theme } from "@src/theme";
 import { useQuery } from "@tanstack/react-query";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
+import Head from "expo-router/head";
 import { useCallback, useRef, useState } from "react";
 import {
   FlatList,
@@ -36,7 +36,7 @@ export default function HomeScreen() {
 
   const scrollRef = useRef<FlatList>(null);
   useScrollToTop(scrollRef as any);
-  const backgroundColor = useThemeColor(theme.color.background);
+  const backgroundColor = theme.color.background.dark;
   const isLiquidGlass = isLiquidGlassAvailable();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
@@ -75,6 +75,13 @@ export default function HomeScreen() {
 
   return (
     <>
+      <Head>
+        <title>Expo Router Blog - Latest Posts</title>
+        <meta
+          name="description"
+          content="Discover the latest articles and posts on Expo Router Blog. Stay updated with modern React Native development and best practices."
+        />
+      </Head>
       <AnimatedFlatList
         ref={scrollRef}
         data={data}

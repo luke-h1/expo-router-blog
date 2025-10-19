@@ -1,29 +1,49 @@
-import { PortableText } from "@portabletext/react-native";
 import { AuthorImage } from "@src/components/AuthorImage";
 import { HeaderButton } from "@src/components/HeaderButton/HeaderButton";
-import { ThemedText, ThemedView, useThemeColor } from "@src/components/Themed";
+import { ThemedText, ThemedView } from "@src/components/Themed";
 import { blogService } from "@src/services/blog-service";
 import imageService from "@src/services/image-service";
 import { theme } from "@src/theme";
 import { useQuery } from "@tanstack/react-query";
 import { osName } from "expo-device";
+
 import {
   Stack,
   useIsPreview,
   useLocalSearchParams,
   useRouter,
 } from "expo-router";
-import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import { lazy, Suspense } from "react";
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+
+const PortableText = lazy(() =>
+  import("@portabletext/react-native").then((module) => ({
+    default: module.PortableText,
+  }))
+);
+
+export async function generateStaticParams(): Promise<
+  Record<string, string>[]
+> {
+  const authors = await blogService.getAllAuthors();
+  // Return an array of params to generate static HTML files for.
+  // Each entry in the array will be a new page.
+  return authors.map((author) => ({ id: author._id }));
+}
 
 export default function AuthorScreen() {
   const isPreview = useIsPreview();
   const params = useLocalSearchParams();
   const router = useRouter();
 
-  const borderColor = useThemeColor(theme.color.border);
-  const backgroundColorSecondary = useThemeColor(
-    theme.color.backgroundSecondary
-  );
+  const borderColor = theme.color.border.dark;
+  const backgroundColorSecondary = theme.color.backgroundSecondary.dark;
 
   const { data: author } = useQuery({
     queryKey: ["author", params.id],
@@ -65,6 +85,7 @@ export default function AuthorScreen() {
             contentContainerStyle={[
               styles.contentContainer,
               isPreview && styles.previewContent,
+              isPreview && { borderColor },
             ]}
             contentInsetAdjustmentBehavior="automatic"
             showsVerticalScrollIndicator={false}
@@ -73,9 +94,14 @@ export default function AuthorScreen() {
               <AuthorImage
                 style={styles.speakerImage}
                 profilePicture={imageService.urlFor(
-                  author.image?.asset?.url as string
+                  author.image?.asset?.url as string,
+                  {
+                    width: isPreview ? 120 : 192,
+                    height: isPreview ? 120 : 192,
+                  }
                 )}
                 size={isPreview ? "medium" : "large"}
+                authorName={author.name}
               />
               <ThemedText
                 fontSize={isPreview ? theme.fontSize16 : theme.fontSize18}
@@ -92,152 +118,162 @@ export default function AuthorScreen() {
               )}
             </View>
             {author.bio && !isPreview ? (
-              <PortableText
-                value={author.bio}
-                components={{
-                  block: {
-                    normal: ({ children }) => (
-                      <ThemedText
-                        fontSize={theme.fontSize14}
-                        fontWeight="medium"
-                        style={{
-                          marginBottom: theme.space16,
-                          lineHeight: theme.fontSize14 * 1.6,
-                        }}
-                      >
-                        {children}
-                      </ThemedText>
-                    ),
-                    h1: ({ children }) => (
-                      <ThemedText
-                        fontSize={theme.fontSize24}
-                        fontWeight="bold"
-                        style={{ marginBottom: theme.space16 }}
-                      >
-                        {children}
-                      </ThemedText>
-                    ),
-                    h2: ({ children }) => (
-                      <ThemedText
-                        fontSize={theme.fontSize20}
-                        fontWeight="bold"
-                        style={{ marginBottom: theme.space12 }}
-                      >
-                        {children}
-                      </ThemedText>
-                    ),
-                    blockquote: ({ children }) => (
-                      <View
-                        style={{
-                          borderLeftWidth: 4,
-                          borderLeftColor: borderColor,
-                          paddingLeft: theme.space16,
-                          marginVertical: theme.space16,
-                        }}
-                      >
-                        <ThemedText
-                          fontSize={theme.fontSize14}
-                          fontWeight="light"
-                          style={{ fontStyle: "italic" }}
-                          color={theme.color.textSecondary}
-                        >
-                          {children}
-                        </ThemedText>
-                      </View>
-                    ),
-                  },
-                  marks: {
-                    strong: ({ children }) => (
-                      <ThemedText fontWeight="bold">{children}</ThemedText>
-                    ),
-                    em: ({ children }) => (
-                      <ThemedText style={{ fontStyle: "italic" }}>
-                        {children}
-                      </ThemedText>
-                    ),
-                    link: ({ value, children }) => (
-                      <ThemedText
-                        style={{ textDecorationLine: "underline" }}
-                        color={{
-                          light: theme.color.reactBlue.light,
-                          dark: theme.color.reactBlue.dark,
-                        }}
-                      >
-                        {children}
-                      </ThemedText>
-                    ),
-                  },
-                  list: {
-                    bullet: ({ children }) => (
-                      <View style={{ marginBottom: theme.space16 }}>
-                        {children}
-                      </View>
-                    ),
-                    number: ({ children }) => (
-                      <View style={{ marginBottom: theme.space16 }}>
-                        {children}
-                      </View>
-                    ),
-                  },
-                  listItem: {
-                    bullet: ({ children }) => (
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          marginBottom: theme.space8,
-                        }}
-                      >
-                        <ThemedText style={{ marginRight: theme.space8 }}>
-                          •
-                        </ThemedText>
+              <Suspense
+                fallback={
+                  <View style={{ padding: theme.space16 }}>
+                    <ActivityIndicator />
+                  </View>
+                }
+              >
+                <PortableText
+                  value={author.bio}
+                  components={{
+                    block: {
+                      normal: ({ children }) => (
                         <ThemedText
                           fontSize={theme.fontSize14}
                           fontWeight="medium"
                           style={{
-                            flex: 1,
+                            marginBottom: theme.space16,
                             lineHeight: theme.fontSize14 * 1.6,
                           }}
                         >
                           {children}
                         </ThemedText>
-                      </View>
-                    ),
-                    number: ({ children, index }) => (
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          marginBottom: theme.space8,
-                        }}
-                      >
-                        <ThemedText style={{ marginRight: theme.space8 }}>
-                          {index + 1}.
-                        </ThemedText>
+                      ),
+                      h1: ({ children }) => (
                         <ThemedText
-                          fontSize={theme.fontSize14}
-                          fontWeight="medium"
+                          fontSize={theme.fontSize24}
+                          fontWeight="bold"
+                          style={{ marginBottom: theme.space16 }}
+                        >
+                          {children}
+                        </ThemedText>
+                      ),
+                      h2: ({ children }) => (
+                        <ThemedText
+                          fontSize={theme.fontSize20}
+                          fontWeight="bold"
+                          style={{ marginBottom: theme.space12 }}
+                        >
+                          {children}
+                        </ThemedText>
+                      ),
+                      blockquote: ({ children }) => (
+                        <View
                           style={{
-                            flex: 1,
-                            lineHeight: theme.fontSize14 * 1.6,
+                            borderLeftWidth: 4,
+                            borderLeftColor: borderColor,
+                            paddingLeft: theme.space16,
+                            marginVertical: theme.space16,
+                          }}
+                        >
+                          <ThemedText
+                            fontSize={theme.fontSize14}
+                            fontWeight="light"
+                            style={{ fontStyle: "italic" }}
+                            color={theme.color.textSecondary}
+                          >
+                            {children}
+                          </ThemedText>
+                        </View>
+                      ),
+                    },
+                    marks: {
+                      strong: ({ children }) => (
+                        <ThemedText fontWeight="bold">{children}</ThemedText>
+                      ),
+                      em: ({ children }) => (
+                        <ThemedText style={{ fontStyle: "italic" }}>
+                          {children}
+                        </ThemedText>
+                      ),
+                      link: ({ value, children }) => (
+                        <ThemedText
+                          style={{ textDecorationLine: "underline" }}
+                          color={{
+                            light: theme.color.reactBlue.light,
+                            dark: theme.color.reactBlue.dark,
                           }}
                         >
                           {children}
                         </ThemedText>
-                      </View>
-                    ),
-                  },
-                }}
-              />
+                      ),
+                    },
+                    list: {
+                      bullet: ({ children }) => (
+                        <View style={{ marginBottom: theme.space16 }}>
+                          {children}
+                        </View>
+                      ),
+                      number: ({ children }) => (
+                        <View style={{ marginBottom: theme.space16 }}>
+                          {children}
+                        </View>
+                      ),
+                    },
+                    listItem: {
+                      bullet: ({ children }) => (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            marginBottom: theme.space8,
+                          }}
+                        >
+                          <ThemedText style={{ marginRight: theme.space8 }}>
+                            •
+                          </ThemedText>
+                          <ThemedText
+                            fontSize={theme.fontSize14}
+                            fontWeight="medium"
+                            style={{
+                              flex: 1,
+                              lineHeight: theme.fontSize14 * 1.6,
+                            }}
+                          >
+                            {children}
+                          </ThemedText>
+                        </View>
+                      ),
+                      number: ({ children, index }) => (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            marginBottom: theme.space8,
+                          }}
+                        >
+                          <ThemedText style={{ marginRight: theme.space8 }}>
+                            {index + 1}.
+                          </ThemedText>
+                          <ThemedText
+                            fontSize={theme.fontSize14}
+                            fontWeight="medium"
+                            style={{
+                              flex: 1,
+                              lineHeight: theme.fontSize14 * 1.6,
+                            }}
+                          >
+                            {children}
+                          </ThemedText>
+                        </View>
+                      ),
+                    },
+                  }}
+                />
+              </Suspense>
             ) : null}
             {author.bio && isPreview ? (
-              <ThemedText
-                fontSize={theme.fontSize12}
-                fontWeight="light"
-                numberOfLines={2}
-                style={styles.previewBio}
-                color={theme.color.textSecondary}
-              >
-                <PortableText value={author.bio} />
-              </ThemedText>
+              <Suspense fallback={null}>
+                <ThemedText
+                  fontSize={theme.fontSize12}
+                  fontWeight="light"
+                  numberOfLines={2}
+                  style={styles.previewBio}
+                  color={theme.color.textSecondary}
+                >
+                  <PortableText value={author.bio} />
+                </ThemedText>
+              </Suspense>
             ) : null}
           </ScrollView>
         ) : (
@@ -267,6 +303,8 @@ const styles = StyleSheet.create({
     paddingVertical: theme.space24,
     width: "90%",
     alignSelf: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: theme.borderRadius20,
   },
   authorName: {
     textAlign: "center",
