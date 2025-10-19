@@ -1,32 +1,62 @@
-import { Author, Post } from "@src/types/sanity.types";
+import { authorsFixture } from "@src/fixtures/authors.fixture";
+import { postsFixture } from "@src/fixtures/posts.fixture";
+import { Author, BlockContent, Post } from "@src/types/sanity.types";
 import { client } from "./sanity-client";
 
-// Custom type for Post with dereferenced author and mainImage
-export type PostWithAuthor = Omit<Post, "author" | "mainImage"> & {
-  author: Author & {
-    image?: {
+const USE_FIXTURES = process.env.EXPO_PUBLIC_USE_FIXTURES;
+
+console.log("USE_FIXTURES", USE_FIXTURES);
+
+export type BlockContentWithResolvedImages = (
+  | Extract<BlockContent[number], { _type: "block" }>
+  | (Omit<Extract<BlockContent[number], { _type: "image" }>, "asset"> & {
       asset?: {
         url?: string;
       };
-    } & Omit<NonNullable<Author["image"]>, "asset">;
+    })
+)[];
+
+export type PostWithAuthor = Omit<Post, "author" | "mainImage" | "body"> & {
+  _originalId?: string;
+  _system?: {
+    base?: {
+      id?: string;
+      rev?: string;
+    };
   };
-  mainImage?: {
+  author: Omit<Author, "image"> & {
+    _originalId?: string;
+    _system?: {
+      base?: {
+        id?: string;
+        rev?: string;
+      };
+    };
+    image: Omit<NonNullable<Author["image"]>, "asset"> & {
+      asset: {
+        url: string;
+      };
+    };
+  };
+  mainImage?: Omit<NonNullable<Post["mainImage"]>, "asset"> & {
     asset?: {
       url?: string;
     };
-    media?: unknown;
-    hotspot?: NonNullable<Post["mainImage"]>["hotspot"];
-    crop?: NonNullable<Post["mainImage"]>["crop"];
-    _type: "image";
   };
+  body?: BlockContentWithResolvedImages;
 };
 
 export const blogService = {
   getAllAuthors: async () => {
+    if (USE_FIXTURES) {
+      return authorsFixture;
+    }
+
     const authors = await client.fetch<PostWithAuthor["author"][]>(`
       *[ _type == "author"] {
         ...,
         image{
+          _type,
           asset->{
             url
           }
@@ -37,15 +67,19 @@ export const blogService = {
     return authors;
   },
   getAuthor: async (id: string) => {
+    if (USE_FIXTURES) {
+      return authorsFixture.find((author) => author._id === id);
+    }
+
     const author = await client.fetch<PostWithAuthor["author"]>(
       `
     *[ _type == "author" && _id == $id][0] {
         ...,
-              image{
-              asset->{
-                url
-              }
-            
+        image{
+          _type,
+          asset->{
+            url
+          }
         }
       }
     `,
@@ -54,25 +88,50 @@ export const blogService = {
     return author;
   },
   getAllPosts: async () => {
+    if (USE_FIXTURES) {
+      return postsFixture;
+    }
+
     const posts = await client.fetch<PostWithAuthor[]>(`
-        *[ _type == "post"] {
-          ...,
-          author->{
-            ...,
-            image{
-              asset->{
-                url
-              }
-            }
-          }
-        }
-        |order(publishedAt desc)
+*[_type == "post"] {
+  ...,
+  author->{
+    ...,
+    image {
+      _type,
+      asset->{
+        url
+      }
+    }
+  },
+  mainImage {
+    _type,
+    asset->{
+      url
+    }
+  },
+  body[]{
+    ...,
+    _type == "image" => {
+      ...,
+      asset->{
+        url
+      }
+    }
+  }
+}
+| order(publishedAt desc)
+
     `);
 
     return posts;
   },
 
   getPostBySlug: async (slug: string) => {
+    if (USE_FIXTURES) {
+      return postsFixture.find((post) => post.slug?.current === slug);
+    }
+
     const post = await client.fetch<PostWithAuthor>(
       `
         *[ _type == "post" && slug.current == $slug][0] {
@@ -80,6 +139,22 @@ export const blogService = {
           author->{
             ...,
             image{
+              _type,
+              asset->{
+                url
+              }
+            }
+          },
+          mainImage{
+            _type,
+            asset->{
+              url
+            }
+          },
+          body[]{
+            ...,
+            _type == "image" => {
+              ...,
               asset->{
                 url
               }
@@ -93,6 +168,10 @@ export const blogService = {
   },
 
   getPostById: async (id: string) => {
+    if (USE_FIXTURES) {
+      return postsFixture.find((post) => post._id === id);
+    }
+
     const post = await client.fetch<PostWithAuthor>(
       `
         *[ _type == "post" && _id == $id][0] {
@@ -100,14 +179,25 @@ export const blogService = {
           author->{
             ...,
             image{
+              _type,
               asset->{
                 url
               }
             }
           },
           mainImage{
+            _type,
             asset->{
               url
+            }
+          },
+          body[]{
+            ...,
+            _type == "image" => {
+              ...,
+              asset->{
+                url
+              }
             }
           }
         }`,
