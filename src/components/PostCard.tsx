@@ -13,9 +13,10 @@ import { ThemedText } from "./Themed";
 
 interface Props {
   post: PostWithAuthor;
+  priority?: "low" | "normal" | "high";
 }
 
-export function PostCard({ post }: Props) {
+export function PostCard({ post, priority = "normal" }: Props) {
   const router = useRouter();
 
   const gesturePostTap = useMemo(
@@ -118,7 +119,7 @@ export function PostCard({ post }: Props) {
                       borderRadius: theme.borderRadius32,
                     }}
                   >
-                    <AuthorDetails author={post.author} />
+                    <AuthorDetails author={post.author} priority={priority} />
                   </View>
                 </Link.Trigger>
                 <Link.Preview style={{ ...styles.preview, width: 100 }} />

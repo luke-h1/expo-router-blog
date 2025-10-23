@@ -39,6 +39,7 @@ export default function Html({ children }: PropsWithChildren) {
         <meta name="color-scheme" content="dark" />
         <meta name="theme-color" content="#000000" />
 
+        {/* DNS prefetch for external resources */}
         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
         <link
           rel="preconnect"
@@ -46,17 +47,10 @@ export default function Html({ children }: PropsWithChildren) {
           crossOrigin="anonymous"
         />
 
-        {/* Preload critical fonts */}
+        {/* Preload only the most critical font (Medium for body text) */}
         <link
           rel="preload"
           href="/assets/node_modules/@expo-google-fonts/montserrat/500Medium/Montserrat_500Medium.9d496514aedf5c9bb3f689de8b094cd8.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="/assets/node_modules/@expo-google-fonts/montserrat/600SemiBold/Montserrat_600SemiBold.c1bd726715a688ead84c2dbf4c82f88d.ttf"
           as="font"
           type="font/ttf"
           crossOrigin="anonymous"
@@ -65,11 +59,12 @@ export default function Html({ children }: PropsWithChildren) {
         <style
           dangerouslySetInnerHTML={{
             __html: `
+              /* Critical font faces with optional display for faster LCP */
               @font-face {
                 font-family: 'Montserrat-Medium';
                 font-style: normal;
                 font-weight: 500;
-                font-display: swap;
+                font-display: optional;
                 src: local('Montserrat Medium'), local('Montserrat-Medium'),
                      url('/assets/node_modules/@expo-google-fonts/montserrat/500Medium/Montserrat_500Medium.9d496514aedf5c9bb3f689de8b094cd8.ttf') format('truetype');
               }
@@ -77,7 +72,7 @@ export default function Html({ children }: PropsWithChildren) {
                 font-family: 'Montserrat-SemiBold';
                 font-style: normal;
                 font-weight: 600;
-                font-display: swap;
+                font-display: optional;
                 src: local('Montserrat SemiBold'), local('Montserrat-SemiBold'),
                      url('/assets/node_modules/@expo-google-fonts/montserrat/600SemiBold/Montserrat_600SemiBold.c1bd726715a688ead84c2dbf4c82f88d.ttf') format('truetype');
               }
@@ -85,20 +80,50 @@ export default function Html({ children }: PropsWithChildren) {
                 font-family: 'Montserrat-Bold';
                 font-style: normal;
                 font-weight: 700;
-                font-display: swap;
+                font-display: optional;
                 src: local('Montserrat Bold'), local('Montserrat-Bold');
               }
               @font-face {
                 font-family: 'Montserrat-Light';
                 font-style: normal;
                 font-weight: 300;
-                font-display: swap;
+                font-display: optional;
                 src: local('Montserrat Light'), local('Montserrat-Light');
+              }
+              
+              /* Critical CSS for initial render - prevents layout shift */
+              * {
+                box-sizing: border-box;
+              }
+              
+              html, body {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                width: 100%;
               }
               
               /* System font fallback with similar metrics to Montserrat */
               body {
                 font-family: 'Montserrat-Medium', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background-color: #000000;
+                color: #ffffff;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+              }
+              
+              /* Critical layout styles to prevent CLS */
+              #root {
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+                background-color: #000000;
+              }
+              
+              /* Optimize image loading */
+              img {
+                max-width: 100%;
+                height: auto;
               }
             `,
           }}

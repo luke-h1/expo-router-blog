@@ -76,7 +76,7 @@ export default function RootLayout() {
 
   const tabBarBackgroundColor = useThemeColor(theme.color.background);
 
-  if (!fontsLoaded && !fontError) {
+  if (Platform.OS !== "web" && !fontsLoaded && !fontError) {
     return null;
   }
 

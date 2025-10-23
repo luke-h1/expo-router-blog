@@ -7,9 +7,10 @@ import { ThemedText } from "./Themed";
 
 interface Props {
   author: PostWithAuthor["author"];
+  priority?: "low" | "normal" | "high";
 }
 
-export function AuthorDetails({ author }: Props) {
+export function AuthorDetails({ author, priority = "normal" }: Props) {
   return (
     <View style={styles.speaker}>
       <AuthorImage
@@ -20,6 +21,7 @@ export function AuthorDetails({ author }: Props) {
         animated
         size="small"
         authorName={author?.name}
+        priority={priority}
       />
       <View style={styles.speakerDetails}>
         <ThemedText fontSize={theme.fontSize16}>{author.name}</ThemedText>

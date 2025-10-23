@@ -11,12 +11,14 @@ export function AuthorImage({
   style,
   animated,
   authorName,
+  priority = "normal",
 }: {
   profilePicture?: string | null;
   size?: "small" | "medium" | "large" | "xlarge";
   style?: ViewStyle;
   animated?: boolean;
   authorName?: string;
+  priority?: "low" | "normal" | "high";
 }) {
   const borderColor = useThemeColor(theme.color.border);
 
@@ -72,7 +74,7 @@ export function AuthorImage({
           onLoadStart={() => setIsLoading(true)}
           onLoadEnd={() => setIsLoading(false)}
           cachePolicy="memory-disk"
-          priority="normal"
+          priority={priority}
           contentFit="cover"
           accessibilityLabel={
             authorName

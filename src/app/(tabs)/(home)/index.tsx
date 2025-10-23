@@ -1,12 +1,14 @@
 import { useFocusEffect, useScrollToTop } from "@react-navigation/native";
 import { queryClient } from "@src/app/_layout";
 import { PostCard } from "@src/components/PostCard";
+import { usePreloadImages } from "@src/hooks/usePreloadImages";
 import { blogService, PostWithAuthor } from "@src/services/blog-service";
+import imageService from "@src/services/image-service";
 import { theme } from "@src/theme";
 import { useQuery } from "@tanstack/react-query";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import Head from "expo-router/head";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   ListRenderItem,
@@ -17,7 +19,6 @@ import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -37,26 +38,18 @@ export default function HomeScreen() {
   const scrollRef = useRef<FlatList>(null);
   useScrollToTop(scrollRef as any);
   const backgroundColor = theme.color.background.dark;
-  const isLiquidGlass = isLiquidGlassAvailable();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
   const animatedTranslateY = useSharedValue(0);
   const isScrolledDown = useSharedValue(false);
 
-  const stickyHeaderStyle = useAnimatedStyle(() => {
-    if (Platform.OS !== "ios") {
-      return {};
-    }
-
-    return {
-      transform: [{ translateY: animatedTranslateY.value }],
-      backgroundColor: isLiquidGlass ? "transparent" : backgroundColor,
-    };
-  });
-
-  const renderItem: ListRenderItem<PostWithAuthor> = useCallback(({ item }) => {
-    return <PostCard post={item} key={item._id} />;
-  }, []);
+  const renderItem: ListRenderItem<PostWithAuthor> = useCallback(
+    ({ item, index }) => {
+      const priority = index < 2 ? "high" : "normal";
+      return <PostCard post={item} key={item._id} priority={priority} />;
+    },
+    []
+  );
 
   useFocusEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -72,6 +65,21 @@ export default function HomeScreen() {
 
     isScrolledDown.value = event.contentOffset.y > 10;
   });
+
+  const criticalImages = useMemo(() => {
+    if (!data || Platform.OS !== "web") return [];
+    return data
+      .slice(0, 2)
+      .map((post) => {
+        return imageService.urlFor(post.author?.image?.asset?.url as string, {
+          width: 84,
+          height: 84,
+        });
+      })
+      .filter(Boolean);
+  }, [data]);
+
+  usePreloadImages(criticalImages);
 
   return (
     <>
