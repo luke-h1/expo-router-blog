@@ -1,6 +1,7 @@
 import { useFocusEffect, useScrollToTop } from "@react-navigation/native";
 import { queryClient } from "@src/app/_layout";
 import { PostCard } from "@src/components/PostCard";
+import { ThemedText, ThemedView, useThemeColor } from "@src/components/Themed";
 import { usePreloadImages } from "@src/hooks/usePreloadImages";
 import { blogService, PostWithAuthor } from "@src/services/blog-service";
 import imageService from "@src/services/image-service";
@@ -8,8 +9,9 @@ import { theme } from "@src/theme";
 import { useQuery } from "@tanstack/react-query";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import Head from "expo-router/head";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   ListRenderItem,
   Platform,
@@ -37,8 +39,7 @@ export default function HomeScreen() {
 
   const scrollRef = useRef<FlatList>(null);
   useScrollToTop(scrollRef as any);
-  const backgroundColor = theme.color.background.dark;
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const backgroundColor = useThemeColor(theme.color.background);
   const insets = useSafeAreaInsets();
   const animatedTranslateY = useSharedValue(0);
   const isScrolledDown = useSharedValue(false);
@@ -81,6 +82,62 @@ export default function HomeScreen() {
 
   usePreloadImages(criticalImages);
 
+  if (isPending) {
+    return (
+      <>
+        <Head>
+          <title>Expo Router Blog - Latest Posts</title>
+          <meta
+            name="description"
+            content="Discover the latest articles and posts on Expo Router Blog."
+          />
+        </Head>
+        <ThemedView
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" />
+          <ThemedText style={{ marginTop: 16 }}>Loading posts...</ThemedText>
+        </ThemedView>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Head>
+          <title>Expo Router Blog - Latest Posts</title>
+          <meta
+            name="description"
+            content="Discover the latest articles and posts on Expo Router Blog."
+          />
+        </Head>
+        <ThemedView
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 24,
+          }}
+        >
+          <ThemedText
+            color={theme.color.textSecondary}
+            style={{ textAlign: "center" }}
+          >
+            Error loading posts: {error.message}
+          </ThemedText>
+          <ThemedText
+            color={theme.color.reactBlue}
+            style={{ marginTop: 16 }}
+            onPress={() => refetch()}
+          >
+            Tap to retry
+          </ThemedText>
+        </ThemedView>
+      </>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -94,10 +151,14 @@ export default function HomeScreen() {
         ref={scrollRef}
         data={data}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={refetch} />
+          <RefreshControl refreshing={false} onRefresh={refetch} />
         }
         style={{ backgroundColor }}
         contentContainerStyle={{
+          paddingTop: Platform.select({
+            android: insets.top,
+            default: 0,
+          }),
           paddingBottom: Platform.select({
             android: 100 + insets.bottom,
             default: 0,
@@ -106,9 +167,15 @@ export default function HomeScreen() {
         contentInsetAdjustmentBehavior="automatic"
         scrollToOverflowEnabled
         onScroll={scrollHandler}
-        stickyHeaderIndices={[0]}
         keyExtractor={(item) => item._id}
         renderItem={renderItem}
+        ListEmptyComponent={
+          <ThemedView style={{ padding: 24, alignItems: "center" }}>
+            <ThemedText color={theme.color.textSecondary}>
+              No posts found
+            </ThemedText>
+          </ThemedView>
+        }
       />
     </>
   );

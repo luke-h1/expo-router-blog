@@ -9,7 +9,11 @@ import {
   Montserrat_600SemiBold_Italic as MontserratSemiBoldItalic,
 } from "@expo-google-fonts/montserrat";
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
-import { DarkTheme, ThemeProvider } from "@react-navigation/native";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
 import { ThemedText, useThemeColor } from "@src/components/Themed";
 import { usePassiveScroll } from "@src/hooks/usePassiveScroll";
 import { theme } from "@src/theme";
@@ -18,6 +22,7 @@ import { osName } from "expo-device";
 import { useFonts } from "expo-font";
 import { isLiquidGlassAvailable } from "expo-glass-effect";
 import * as NavigationBar from "expo-navigation-bar";
+import { setBackgroundColorAsync } from "expo-navigation-bar";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -28,16 +33,14 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: Platform.OS === "web" ? 1 : 3,
+      retry: Platform.OS === "web" ? 5 : 3,
       refetchOnReconnect: true,
       retryDelay: Platform.OS === "web" ? 1000 : 2000,
-      staleTime: 60000, // 1 minute
-      gcTime: 300000, // 5 minutes
+      staleTime: 60000,
+      gcTime: 300000,
     },
   },
 });
-
-SplashScreen.preventAutoHideAsync();
 
 SplashScreen.setOptions({
   duration: 200,
@@ -74,6 +77,14 @@ export default function RootLayout() {
     }
   }, [colorScheme]);
 
+  useEffect(() => {
+    setBackgroundColorAsync(
+      colorScheme === "dark"
+        ? theme.color.background.dark
+        : theme.color.background.light
+    );
+  }, [colorScheme]);
+
   const tabBarBackgroundColor = useThemeColor(theme.color.background);
 
   if (Platform.OS !== "web" && !fontsLoaded && !fontError) {
@@ -84,8 +95,14 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={styles.container}>
         <ActionSheetProvider>
-          <ThemeProvider value={DarkTheme}>
-            <StatusBar style={"dark"} />
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <StatusBar
+              style={colorScheme === "dark" ? "light" : "dark"}
+              translucent={Platform.OS === "android"}
+              backgroundColor="transparent"
+            />
 
             <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

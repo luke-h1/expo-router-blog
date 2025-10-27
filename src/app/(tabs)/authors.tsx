@@ -1,5 +1,5 @@
 import { AuthorImage } from "@src/components/AuthorImage";
-import { ThemedText } from "@src/components/Themed";
+import { ThemedText, useThemeColor } from "@src/components/Themed";
 import { blogService, PostWithAuthor } from "@src/services/blog-service";
 import { theme } from "@src/theme";
 import { useQuery } from "@tanstack/react-query";
@@ -23,8 +23,8 @@ export default function AuthorScreen() {
     queryFn: () => blogService.getAllAuthors(),
   });
 
-  const backgroundColor = theme.color.background.dark;
-  const borderColor = theme.color.border.dark;
+  const backgroundColor = useThemeColor(theme.color.background);
+  const borderColor = useThemeColor(theme.color.border);
   const insets = useSafeAreaInsets();
 
   const renderItem: ListRenderItem<PostWithAuthor["author"]> = useCallback(

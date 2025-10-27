@@ -30,6 +30,7 @@
         "@sanity/react-loader": "^1.11.11",
         "@sanity/visual-editing": "^2.15.0",
         "@tanstack/react-query": "5.90.5",
+        "@zoontek/react-native-navigation-bar": "^1.0.1",
         "date-fns": "^4.1.0",
         "expo": "~54.0.13",
         "expo-blur": "^15.0.7",
@@ -685,6 +686,8 @@
     "@vercel/stega": ["@vercel/stega@0.1.2", "", {}, "sha512-P7mafQXjkrsoyTRppnt0N21udKS9wUmLXHRyP9saLXLHw32j/FgUJ3FscSWgvSqRs4cj7wKZtwqJEvWJ2jbGmA=="],
 
     "@xmldom/xmldom": ["@xmldom/xmldom@0.8.11", "", {}, "sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw=="],
+
+    "@zoontek/react-native-navigation-bar": ["@zoontek/react-native-navigation-bar@1.0.1", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-AAkdYlzhsywWB/dW3UlEP8i/NPPp71lCf8uCvnUbNTOBtM0OkPocZeKZCjfH2m1i0Vrovwsk1TwTZr+Pn7nHyA=="],
 
     "abort-controller": ["abort-controller@3.0.0", "", { "dependencies": { "event-target-shim": "^5.0.0" } }, "sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg=="],
 
